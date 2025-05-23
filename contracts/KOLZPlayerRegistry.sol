@@ -95,50 +95,51 @@ contract KOLZPlayerRegistry {
         emit PlayerCheckedIn(msg.sender, currentTimestamp, player.consecutiveCheckIns);
     }
 
-function checkInWithRegisterIfNeeded(
-    string calldata username,
-    string calldata telegramId,
-    string calldata telegramName,
-    string calldata email,
-    string calldata x
-    ) external {
-        if (bytes(players[msg.sender].username).length == 0) {
-            // Tự động register nếu chưa có
-            players[msg.sender] = Player({
-                username: username,
-                points: 0,
-                telegramId: telegramId,
-                telegramName: telegramName,
-                email: email,
-                x: x,
-                lastCheckIn: 0,
-                consecutiveCheckIns: 0,
-                checkInTimestamps: new uint256 
-            });
-            playerAddresses.push(msg.sender);
-            emit PlayerRegistered(msg.sender, username);
-        }
-    
-        Player storage player = players[msg.sender];
-        uint256 currentTimestamp = block.timestamp;
-    
-        if (player.lastCheckIn != 0) {
-            uint256 daysSinceLastCheckIn = (currentTimestamp - player.lastCheckIn) / 1 days;
-            require(daysSinceLastCheckIn >= 1, "Already checked in today");
-    
-            if (daysSinceLastCheckIn == 1) {
-                player.consecutiveCheckIns += 1;
+    function checkInWithRegisterIfNeeded(
+        string calldata username,
+        string calldata telegramId,
+        string calldata telegramName,
+        string calldata email,
+        string calldata x
+        ) external {
+            if (bytes(players[msg.sender].username).length == 0) {
+                // New registration if player doesn't exists
+                players[msg.sender] = Player({
+                    username: username,
+                    points: 0,
+                    telegramId: telegramId,
+                    telegramName: telegramName,
+                    email: email,
+                    x: x,
+                    lastCheckIn: 0,
+                    consecutiveCheckIns: 0,
+                    checkInTimestamps: new uint256[](0)
+
+                });
+                playerAddresses.push(msg.sender);
+                emit PlayerRegistered(msg.sender, username);
+            }
+        
+            Player storage player = players[msg.sender];
+            uint256 currentTimestamp = block.timestamp;
+        
+            if (player.lastCheckIn != 0) {
+                uint256 daysSinceLastCheckIn = (currentTimestamp - player.lastCheckIn) / 1 days;
+                require(daysSinceLastCheckIn >= 1, "Already checked in today");
+        
+                if (daysSinceLastCheckIn == 1) {
+                    player.consecutiveCheckIns += 1;
+                } else {
+                    player.consecutiveCheckIns = 1;
+                }
             } else {
                 player.consecutiveCheckIns = 1;
             }
-        } else {
-            player.consecutiveCheckIns = 1;
-        }
-    
-        player.lastCheckIn = currentTimestamp;
-        player.checkInTimestamps.push(currentTimestamp);
-    
-        emit PlayerCheckedIn(msg.sender, currentTimestamp, player.consecutiveCheckIns);
+        
+            player.lastCheckIn = currentTimestamp;
+            player.checkInTimestamps.push(currentTimestamp);
+        
+            emit PlayerCheckedIn(msg.sender, currentTimestamp, player.consecutiveCheckIns);
     }
 
     function getProfile(address playerAddress) external view returns (
